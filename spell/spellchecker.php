@@ -1,7 +1,7 @@
 <?php
 header('Content-type: text/html; charset=utf-8');
 
-include_once( dirname( __FILE__ )."/spellConfig.php");
+include_once( dirname( __FILE__ )."/spellInclude.php");
 
 $spellercss = dirname( $PHP_SELF ).'/spellerStyle.css';
 $word_win_src = dirname( $PHP_SELF ).'/wordWindow.js';
@@ -65,8 +65,7 @@ function print_checker_results() {
 	global $input_separator;
 	$aspell_err = "";
 
-	$aspell_opts        = "-a -H --lang=".$current_settings['language']." --personal=".$current_settings['aspell_dict'];
-	global $aspell_word_list;
+	$aspell_opts        = "-a --lang=".$current_settings['language']." --personal=".$current_settings['aspell_dict'];
 
 	# make sure the personal dictionary is there.
 	if( !file_exists( $current_settings['aspell_dict'] ) ) {
@@ -92,7 +91,7 @@ function print_checker_results() {
 		fclose( $fh );
 
 		# exec aspell command - redirect STDERR to STDOUT
-		$cmd = $current_settings['aspell_prog']." $aspell_opts < $tempfile 2>&1";
+		$cmd = $current_settings['aspell_path']." $aspell_opts < $tempfile 2>&1";
 		if( $aspellret = shell_exec( $cmd )) {
 			$linesout = explode( "\n", $aspellret );
 			$index = 0;

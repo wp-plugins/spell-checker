@@ -1,4 +1,4 @@
-<?php include_once( dirname( __FILE__ )."/spellConfig.php" ); ?>
+<?php include_once( dirname( __FILE__ )."/spellInclude.php" ); ?>
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="spellerStyle.css"/>
@@ -148,6 +148,8 @@ function init_spell() {
 			<td>&nbsp;&nbsp;</td>
 <?php 
 	  get_currentuserinfo();
+      $current_options = speller_get_settings('speller_options');
+      $current_settings = speller_get_settings('speller_settings');
 	  if((!$current_options['must_be_logged_in']) || ($current_options['must_be_logged_in'] && ($user_level >= $current_settings['minimum_user_level_to_add']))) {
 ?>
             <td>

@@ -34,7 +34,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-require_once((dirname(__FILE__)."/spell/spellInclude.php"));
+require((dirname(__FILE__)."/spell/spellInclude.php"));
 
 /* Damn near all of this "option page insertion" code is from the simply awesome Spam Karma. All hail. */
 if(isset( $_REQUEST['speller_setup']) && is_file(ABSPATH . "wp-admin/admin.php") )
@@ -42,9 +42,9 @@ if(isset( $_REQUEST['speller_setup']) && is_file(ABSPATH . "wp-admin/admin.php")
     die( "If you are using WordPress version 1.3.2 and higher, please use the Admin menu to access the Spell Checker options (under Options >> Spell Checker). You can also use this direct link: <a href=\"". get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php\">". get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php</a>");
 }
 
-if (! function_exists('is_plugin_page'))
+if (! function_exists('speller_is_plugin_page'))
 {
-    function is_plugin_page()
+    function speller_is_plugin_page()
     {
         return isset($_REQUEST['speller_setup']);
     }
@@ -129,7 +129,7 @@ if ($insert_html)
 }
     
 
-if( is_plugin_page() )
+if( speller_is_plugin_page() )
 {
     if ($insert_html)
     {
@@ -153,7 +153,7 @@ if( is_plugin_page() )
         'aspell_path' => '/usr/bin/aspell',
         'language' => 'en_US',
         'aspell_dict' => dirname( __FILE__ )."/spell/aspell.personal",
-        'tmpfiledir' => '/tmp',
+        'tmpfiledir' => dirname( __FILE__ )."/spell/",
         );
 
     $default_options = array(
@@ -161,195 +161,253 @@ if( is_plugin_page() )
         'minimum_user_level_to_add',
     );
 
-
-    if( isset( $_POST['update_options'] ) )
+    if(ini_get('safe_mode'))
     {
-        speller_update_option('speller_options',  $_POST['speller_options']);
-
-        $new_settings = array_merge(speller_get_settings('speller_settings'), $_POST['speller_settings']);
-        foreach($default_settings as $key => $val)
-            if (empty($new_settings[$key]))
-                $new_settings[$key] = $val;
-        speller_update_option('speller_settings', $new_settings);
-
-        update_personal_dictionary( $_POST['personal_dictionary_words'] );
-
-        echo '<div class="updated"><p><strong>' . __('Options updated.', 'spellerdomain') . '</strong></p></div>';
-        $speller_options = speller_get_settings('speller_options');
-        $speller_settings = speller_get_settings('speller_settings');
-        if(!is_array($speller_settings)) 
-            $speller_settings = $default_settings;
-        if(!is_array($speller_options)) 
-            $speller_options = $default_options;
+        echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: Your web server has PHP SAFE_MODE enabled. Unfortunately it is currently impossible for the Spelling Checker plugin to run in a SAFE_MODE environment. At this point your best bet is to uninstall the plugin. Sorry!', 'spellerdomain') . '</strong></p></div>';
+        if( speller_option_set( 'enable_speller' ) )
+        {
+            unset($speller_options[array_search('enable_speller',$speller_options)]);
+            $speller_options = array_values( $speller_options );
+            speller_update_option('speller_options',  $speller_options);
+        }
     }
     else
     {
-        add_option('speller_options', $default_options);
-        add_option('speller_settings', $default_settings);
-        $speller_options = speller_get_settings('speller_options');
-        $speller_settings = speller_get_settings('speller_settings');
-        if(!is_array($speller_settings)) 
-            $speller_settings = $default_settings;
-        if(!is_array($speller_options)) 
-            $speller_options = $default_options;
-    }
-
-    if( !speller_option_set( 'enable_speller' ) )
-    {
-        // First time we've run. See if we have a legacy spellConfig.php file 
-        // that we can mine setup information from.
-        if( !speller_option_set( 'options_mined') && file_exists( dirname(__FILE__)."/spell/spellConfig.php" ) )
+        global $speller_options;
+        if( isset( $_POST['update_options'] ) )
         {
-            include( dirname(__FILE__)."/spell/spellConfig.php" );
-
-            $speller_settings['minimum_user_level'] = $minimum_user_level_to_add_words;
-            $speller_settings['language'] = $lang;
-            $speller_settings['aspell_path'] = $aspell_prog;
-            $speller_settings['aspell_dict'] = $aspell_dict;
-            $speller_settings['tmpfiledir'] = $tempfiledir;
-            if( $broken_aspell_personal_dictionary )
-                $speller_options[] = 'broken_aspell_support';
-            if( $must_be_logged_in_to_add )
-                $speller_options[] = 'must_be_logged_in';
-
-            speller_update_option('speller_settings', $speller_settings);
-            $speller_options[] = 'options_mined';
-
-            echo '<div class="updated"><p><strong>' . __('Options have been extracted from your existing configuration file. Please verify their accuracy.', 'spellerdomain') . '</strong></p></div>';
+            speller_update_option('speller_options',  $_POST['speller_options']);
+    
+            $new_settings = array_merge(speller_get_settings('speller_settings'), $_POST['speller_settings']);
+            foreach($default_settings as $key => $val)
+                if (empty($new_settings[$key]))
+                    $new_settings[$key] = $val;
+            speller_update_option('speller_settings', $new_settings);
+    
+            update_personal_dictionary( $_POST['personal_dictionary_words'] );
+    
+            echo '<div class="updated"><p><strong>' . __('Options updated.', 'spellerdomain') . '</strong></p></div>';
+            $speller_options = speller_get_settings('speller_options');
+            $speller_settings = speller_get_settings('speller_settings');
+            if(!is_array($speller_settings)) 
+                $speller_settings = $default_settings;
+            if(!is_array($speller_options)) 
+                $speller_options = $default_options;
         }
-
-        // Let's see if we can find the aspell executable.
-        if( !file_exists( $speller_settings['aspell_path'] ) )
+        else
         {
-            exec( "which aspell 2>&1", $out, $err );
-            if( $err == 0 )
+            add_option('speller_options', $default_options);
+            add_option('speller_settings', $default_settings);
+            $speller_options = speller_get_settings('speller_options');
+            $speller_settings = speller_get_settings('speller_settings');
+            if(!is_array($speller_settings)) 
+                $speller_settings = $default_settings;
+            if(!is_array($speller_options)) 
+                $speller_options = $default_options;
+        }
+    
+        if( !speller_option_set( 'enable_speller' ) )
+        {
+            // First time we've run. See if we have a legacy spellConfig.php file 
+            // that we can mine setup information from.
+            if( !speller_option_set( 'options_mined') && file_exists( dirname(__FILE__)."/spell/spellConfig.php" ) )
             {
-                if( count( $out ) == 1 )
+                include( dirname(__FILE__)."/spell/spellConfig.php" );
+    
+                $speller_settings['minimum_user_level'] = $minimum_user_level_to_add_words;
+                $speller_settings['language'] = $lang;
+                $speller_settings['aspell_path'] = $aspell_prog;
+                $speller_settings['aspell_dict'] = $aspell_dict;
+                $speller_settings['tmpfiledir'] = ($tempfiledir == ''?'/tmp':$tempfiledir);
+                if( $broken_aspell_personal_dictionary )
+                    $speller_options[] = 'broken_aspell_support';
+                if( $must_be_logged_in_to_add )
+                    $speller_options[] = 'must_be_logged_in';
+    
+                speller_update_option('speller_settings', $speller_settings);
+                $speller_options[] = 'options_mined';
+    
+                echo '<div class="updated"><p><strong>' . __('Options have been extracted from your existing configuration file. Please verify their accuracy.', 'spellerdomain') . '</strong></p></div>';
+            }
+    
+            // Let's see if we can find the aspell executable.
+            if( !file_exists( $speller_settings['aspell_path'] ) )
+            {
+                exec( "which aspell 2>&1", $out, $err );
+                if( $err == 0 )
                 {
-                    if( preg_match( "/^(\/.*)$/", $out[0] ) == 1 )
+                    if( count( $out ) == 1 )
                     {
-                        $speller_settings['aspell_path'] = $out[0];
-                        speller_update_option('speller_settings', $speller_settings);
+                        if( preg_match( "/^(\/.*)$/", $out[0] ) == 1 )
+                        {
+                            $speller_settings['aspell_path'] = $out[0];
+                            speller_update_option('speller_settings', $speller_settings);
+                            echo '<div class="updated"><p><strong>' . __('Auto-detected the aspell executable. Using "', 'spellerdomain') . $speller_settings['aspell_path'] . '".</strong></p></div>';
+                        }
+                    }
+                }
+            } else if( !speller_option_set( 'options_mined' ) )
+            {
+                echo '<div class="updated"><p><strong>' . __('Auto-detected the aspell executable. Using "', 'spellerdomain') . $speller_settings['aspell_path'] . '".</strong></p></div>';
+            }
+
+            // First run, but no options mined. Let's see if we can help the user find some settings.
+            if( !speller_option_set( 'options_mined' ) )
+            {
+                exec( $speller_settings['aspell_path'] . " dump config", $out, $err );
+                if( $err == 0 )
+                {
+                    $home_dir = '';
+                    $filename = '';
+                    foreach( $out as $line )
+                    {
+                        if( strpos( $line, "# lang current" ) !== FALSE )
+                        {
+                            $line = ltrim( substr($line, strrpos($line,":") + 1) );
+                            $speller_settings['language'] = $line;
+                            echo '<div class="updated"><p><strong>' . __('Auto-detected the language. Using "', 'spellerdomain') . $speller_settings['language'] . '".</strong></p></div>';
+                        }
                     }
                 }
             }
-        }
-
-        $speller_options[] = 'enable_speller';
-        speller_update_option('speller_options',  $speller_options);
-    }
-
-    if(!is_writable(dirname($speller_settings['aspell_dict'])))
-    {
-        unset($speller_options['enable_speller']);
-        speller_update_option('speller_options',  $speller_options);
-        echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: You forgot to make the personal dictionary directory writable. Please read the install instructions and chmod this folder to provide write privileges to the Apache task.', 'spellerdomain') . '</strong></p></div>';
-    }
-    else if( !file_exists( $speller_settings['aspell_dict'] ) )
-    {
-        if( !create_dictionary() )
-        {
-            unset($speller_options['enable_speller']);
-            speller_update_option('speller_options',  $speller_options);
-            echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: Unable to create the personal dictionary file! This generally indicates a permissions problem for the actual file. Delete the current file or change the permissions appropriately for the web server to create a new file.', 'spellerdomain') . '</strong></p></div>';
-        }
-    }
-
-    ?>
     
-    <div class="wrap">
-        <h2><?php _e("Spell Checker Options", 'spellerdomain') ?></h2>
-        <form name="spelling_checker_form" method="post">
-            <fieldset class="options">
-                <legend>
-<?php _e("Personal Dictionary", 'spellerdomain')?>
-                </legend>
-                <?php _e('The personal dictionary holds those words that you do not wish to be found as misspellings. You can add to that list of words here.', 'spellerdomain' ) ?>
-                
-                <p>
-                <textarea name="personal_dictionary_words" cols="60" rows="9" id="personal_dictionary_words" style="width: 98%; font-size: 12px;" class="code"><?php echo personal_dictionary_word_list(); ?></textarea>
-                </p>
-            </fieldset>
-            <fieldset class="options">
-                <legend>
-<?php _e("General Settings <em>(generally leave at default if you're not sure)</em>", 'spellerdomain')?>
-                </legend>
-                <ul>
-                    <li>
-                        <label for="aspell_path">
-                            <?php _e('Name and path to aspell executable:', 'spellerdomain' ) ?>
-                        
-                        </label>
-                        <input type="text" name="speller_settings[aspell_path]" value="<?php echo $speller_settings['aspell_path'] ?>" size="60">
-                    </li>
-                    <li>
-                        <label for="aspell_dict">
-                            <?php _e('Name and path to aspell personal dictionary:', 'spellerdomain' ) ?>
-                        
-                        </label>
-                        <input type="text" name="speller_settings[aspell_dict]" value="<?php echo $speller_settings['aspell_dict'] ?>" size="60">
-                    </li>
-                    <li>
-                        <label for="language">
-                            <?php _e('Aspell language:', 'spellerdomain' ) ?>
-                        
-                        </label>
-                        <input type="text" name="speller_settings[language]" value="<?php echo $speller_settings['language'] ?>" size="20">
-                    </li>
-                    <li>
-                        <label for="tmpfiledir">
-                            <?php _e('Path to use for temporary files', 'spellerdomain' ) ?>
-                        
-                        </label>
-                        <input type="text" name="speller_settings[tmpfiledir]" value="<?php echo $speller_settings['tmpfiledir'] ?>" size="20">
-                    </li>
-                    <li>
-                        <label for="broken_aspell_support">
-                            <input name="speller_options[]" type="checkbox" id="broken_aspell_support" value="broken_aspell_support" <?php check_flag('broken_aspell_support', $speller_options); ?> />
-                            <?php _e('Enable manual personal dictionary handling for broken aspell installations.', 'spellerdomain' ) ?>
-                        
-                        </label>
-                    </li>
-                </ul>
-            </fieldset>
-            <fieldset class="options">
-                <legend>
-                    <?php _e("Security Settings <em>(default values are the safest)</em>", 'spellerdomain') ?>
-                </legend>
-                <ul>
-                    <li>
-                        <label for="must_be_logged_in">
-                            <input name="speller_options[]" type="checkbox" id="must_be_logged_in" value="must_be_logged_in" <?php check_flag('must_be_logged_in', $speller_options); ?> />
-                            <?php _e('Users must be logged in to add words to dictionary.', 'spellerdomain' ) ?>
-                        
-                        </label>
-                    </li>
+            $speller_options[] = 'enable_speller';
+            speller_update_option('speller_options',  $speller_options);
+        }
+
+        if(!is_writable($speller_settings['tmpfiledir']))
+        {
+            if( speller_option_set( 'enable_speller' ) )
+            {
+                unset($speller_options[array_search('enable_speller',$speller_options)]);
+                $speller_options = array_values( $speller_options );
+                speller_update_option('speller_options',  $speller_options);
+            }
+            echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: The temporary directory you specified is not writeable from the Apache task. Either select a different temporary directory (like "/tmp") or make the directory you specified writable by the Apache task (chmod 755 the directory).', 'spellerdomain') . '</strong></p></div>';
+        }
+    
+        if(!is_writable(dirname($speller_settings['aspell_dict'])))
+        {
+            if( speller_option_set( 'enable_speller' ) )
+            {
+                unset($speller_options[array_search('enable_speller',$speller_options)]);
+                $speller_options = array_values( $speller_options );
+                speller_update_option('speller_options',  $speller_options);
+            }
+            echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: You forgot to make the personal dictionary directory writable. Please read the install instructions and chmod this folder to provide write privileges to the Apache task.', 'spellerdomain') . '</strong></p></div>';
+        }
+        else if( !file_exists( $speller_settings['aspell_dict'] ) )
+        {
+            if( !create_dictionary() )
+            {
+                if( speller_option_set( 'enable_speller' ) )
+                {
+                    unset($speller_options[array_search('enable_speller',$speller_options)]);
+                    $speller_options = array_values( $speller_options );
+                    speller_update_option('speller_options',  $speller_options);
+                }
+                echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: Unable to create the personal dictionary file! This generally indicates a permissions problem for the actual file. Delete the current file or change the permissions appropriately for the web server to create a new file.', 'spellerdomain') . '</strong></p></div>';
+            }
+        }
+    
+        ?>
+        
+        <div class="wrap">
+            <h2><?php _e("Spell Checker Options", 'spellerdomain') ?></h2>
+            <form name="spelling_checker_form" method="post">
+                <fieldset class="options">
+                    <legend>
+    <?php _e("Personal Dictionary", 'spellerdomain')?>
+                    </legend>
+                    <?php _e('The personal dictionary holds those words that you do not wish to be found as misspellings. You can add to that list of words here.', 'spellerdomain' ) ?>
+                    
+                    <p>
+                    <textarea name="personal_dictionary_words" cols="60" rows="9" id="personal_dictionary_words" style="width: 98%; font-size: 12px;" class="code"><?php echo personal_dictionary_word_list(); ?></textarea>
+                    </p>
+                </fieldset>
+                <fieldset class="options">
+                    <legend>
+    <?php _e("General Settings <em>(generally leave at default if you're not sure)</em>", 'spellerdomain')?>
+                    </legend>
                     <ul>
                         <li>
-                            <label for="minimum_user_level_to_add">
-                                <input name="speller_options[]" type="checkbox" id="minimum_user_level_to_add" value="minimum_user_level_to_add" <?php check_flag('minimum_user_level_to_add', $speller_options); ?> />
-                                <?php _e('Users must be a minimum of level', 'spellerdomain' ) ?>
-        						<input name="speller_settings[minimum_user_level]" type="textbox" id="minimum_user_level" value="<?php echo $speller_settings['minimum_user_level']; ?>" size="2" />
-                                <label for="email_deleted_digest">
-                                <?php _e('to add words to dictionary.', 'spellerdomain') ?>
-                                </label>
+                            <label for="aspell_path">
+                                <?php _e('Name and path to aspell executable:', 'spellerdomain' ) ?>
+                            
+                            </label>
+                            <input type="text" name="speller_settings[aspell_path]" value="<?php echo $speller_settings['aspell_path'] ?>" size="60">
+                        </li>
+                        <li>
+                            <label for="aspell_dict">
+                                <?php _e('Name and path to aspell personal dictionary:', 'spellerdomain' ) ?>
+                            
+                            </label>
+                            <input type="text" name="speller_settings[aspell_dict]" value="<?php echo $speller_settings['aspell_dict'] ?>" size="60">
+                        </li>
+                        <li>
+                            <label for="language">
+                                <?php _e('Aspell language:', 'spellerdomain' ) ?>
+                            
+                            </label>
+                            <input type="text" name="speller_settings[language]" value="<?php echo $speller_settings['language'] ?>" size="20">
+                        </li>
+                        <li>
+                            <label for="tmpfiledir">
+                                <?php _e('Path to use for temporary files', 'spellerdomain' ) ?>
+                            
+                            </label>
+                            <input type="text" name="speller_settings[tmpfiledir]" value="<?php echo $speller_settings['tmpfiledir'] ?>" size="60">
+                        </li>
+                        <li>
+                            <label for="broken_aspell_support">
+                                <input name="speller_options[]" type="checkbox" id="broken_aspell_support" value="broken_aspell_support" <?php check_flag('broken_aspell_support', $speller_options); ?> />
+                                <?php _e('Enable manual personal dictionary handling for broken aspell installations.', 'spellerdomain' ) ?>
+                            
                             </label>
                         </li>
                     </ul>
-                </ul>
-                <?php if( speller_option_set( 'enable_speller' ) ) { ?>
-				<input name="speller_options[]" type="hidden" id="enable_speller" value="enable_speller" />
-                <?php } ?>
-            
-            </fieldset>
-
-            <p class="submit">
-            <input type="submit" name="update_options" value="<?php _e('Update Options') ?>" />
-            </p>
-        </form>
-    </div>
+                </fieldset>
+                <fieldset class="options">
+                    <legend>
+                        <?php _e("Security Settings <em>(default values are the safest)</em>", 'spellerdomain') ?>
+                    </legend>
+                    <ul>
+                        <li>
+                            <label for="must_be_logged_in">
+                                <input name="speller_options[]" type="checkbox" id="must_be_logged_in" value="must_be_logged_in" <?php check_flag('must_be_logged_in', $speller_options); ?> />
+                                <?php _e('Users must be logged in to add words to dictionary.', 'spellerdomain' ) ?>
+                            
+                            </label>
+                        </li>
+                        <ul>
+                            <li>
+                                <label for="minimum_user_level_to_add">
+                                    <input name="speller_options[]" type="checkbox" id="minimum_user_level_to_add" value="minimum_user_level_to_add" <?php check_flag('minimum_user_level_to_add', $speller_options); ?> />
+                                    <?php _e('Users must be a minimum of level', 'spellerdomain' ) ?>
+            						<input name="speller_settings[minimum_user_level]" type="textbox" id="minimum_user_level" value="<?php echo $speller_settings['minimum_user_level']; ?>" size="2" />
+                                    <label for="email_deleted_digest">
+                                    <?php _e('to add words to dictionary.', 'spellerdomain') ?>
+                                    </label>
+                                </label>
+                            </li>
+                        </ul>
+                    </ul>
+                    <?php if( speller_option_set( 'enable_speller' ) ) { ?>
+    				<input name="speller_options[]" type="hidden" id="enable_speller" value="enable_speller" />
+                    <?php } ?>
+                    <?php if( speller_option_set( 'options_mined' ) ) { ?>
+    				<input name="speller_options[]" type="hidden" id="options_mined" value="options_mined" />
+                    <?php } ?>
+                
+                </fieldset>
+    
+                <p class="submit">
+                <input type="submit" name="update_options" value="<?php _e('Update Options') ?>" />
+                </p>
+            </form>
+        </div>
 <?php
-
+    }
 
 }
 else
@@ -366,19 +424,11 @@ else
            function spell_admin_footer($content) {
                // Are we on the right page?
                if((preg_match('|post.php|i', $_SERVER["REQUEST_URI"]))||(preg_match('|page-new.php|i', $_SERVER["REQUEST_URI"]))) {
-                   
-               if(ini_get('safe_mode'))
-               { ?>
-			
-    <div id="spellingdiv">
-        Spell Checker Disabled - Safe Mode on.
-    </div>
-            <?php } else { ?>
+            ?>
 			
     <div style="display: inline" id="spellingdiv">
         <input type="button" value="Check Spelling" onClick="openSpellChecker();" />
     </div>
-            <?php } ?>
 				
     <script language="JavaScript" type="text/javascript">
         var savebutton = document.getElementById("saveasdraft");
@@ -392,8 +442,8 @@ else
         var substitution2 = document.getElementById("spellingdiv");
         submitp.insertBefore(substitution2, savebutton);
     </script>
-               <?php
-               }
+            <?php
+                }
             }
         }
         
