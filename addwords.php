@@ -2,14 +2,6 @@
 
 require_once( dirname( __FILE__ ) . "/spellInclude.php");
 
-// Optionally only allow logged-in users to add words.
-// If so, require the auth script so that only people logged
-// in can get in.
-if( speller_option_set('must_be_logged_in') )
-{
-	require_once( dirname(dirname(dirname( __FILE__ ))) . "/wp-admin/auth.php" );
-}
-
 function response_xml($return_val) {
 	header("Content-type: text/xml");
 
