@@ -3,7 +3,7 @@
 Plugin Name: Spelling Checker
 Plugin URI: http://www.coldforged.org/spelling-checker-plugin-for-wordpress/
 Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="../wp-content/plugins/spell-plugin.php?speller_setup">Spell Checker Configuration</a> page. 
-Version: 1.16
+Version: 1.17
 Author: Brian "ColdForged" Dupuis
 Author URI: http://www.coldforged.org/
 Update: http://www.coldforged.org/plugin-update.php?p=544
@@ -453,10 +453,14 @@ else
     <script language="JavaScript" type="text/javascript">
         var savebutton = document.getElementById("saveasdraft");
         if( !savebutton ) {
-        savebutton = document.getElementById("save");
-        if( !savebutton ) {
-            savebutton = document.getElementById("savepage");
-        }
+            savebutton = document.getElementById("save");
+            if( !savebutton ) {
+                savebutton = document.getElementById("savepage");
+                if( !savebutton ) {
+                    savebutton = document.getElementById("editcomment");
+                }
+            }
+
         }
         var submitp = savebutton.parentNode;
         var substitution2 = document.getElementById("spellingdiv");
