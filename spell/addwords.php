@@ -60,9 +60,15 @@ function add_word_to_dictionary($word_to_add) {
 
 function add_word_to_dictionary_manually($word_to_add) {
     global $aspell_dict;
+    global $lang;
 
-    if()
+	if( file_exists( $aspell_dict ) )
 	{
+        $dict = fopen( $aspell_dict, 'a+b' );
+        fwrite( $dict, "\n".$word_to_add );
+        rewind( $dict );
+
+
 	}
 }
 
