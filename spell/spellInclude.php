@@ -87,18 +87,18 @@ if( ! function_exists('create_dictionary') )
 		if( speller_option_set( 'broken_aspell_support' ) )
 		{
 			// Write the new word to the end of the file.
-			$dict = fopen( $current_settings['aspell_dict'], 'wb' );
+			$dict = @fopen( $current_settings['aspell_dict'], 'wb' );
 			if( file_exists( $aspell_word_list ) ) 
 			{
 				$lines = file( $aspell_word_list );
 				$count = count( $lines );
-				fwrite( $dict, "personal_ws-1.1 ".$current_settings['language']." $count\n" );
+				@fwrite( $dict, "personal_ws-1.1 ".$current_settings['language']." $count\n" );
 				foreach( $lines as $line )
 				{
-					fwrite( $dict, $line );
+					@fwrite( $dict, $line );
 				}
 			}
-			fclose( $dict );		 
+			@fclose( $dict );		 
 		}
         else
 		{
@@ -132,10 +132,10 @@ if( ! function_exists('update_personal_dictionary') )
 			$lines = explode( " ", $words );
 			$count = count( $lines );
 
-			if( ( $dict = fopen( $current_settings['aspell_dict'], 'wb' ) ) !== false )
+			if( ( $dict = @fopen( $current_settings['aspell_dict'], 'wb' ) ) !== false )
 			{
 				// Empty the file.
-				ftruncate( $dict, 0);	  
+				@ftruncate( $dict, 0);	  
 
 				// Now, update the word count on the first line. It's the last of three 
 				// space-delimited strings (e.g. personal_ws-1.1 english 15)
@@ -143,17 +143,17 @@ if( ! function_exists('update_personal_dictionary') )
 				$elements[2] = strval( $count );
 				$oldlines[0] = implode( ' ', $elements ) . "\n";
 
-                fwrite( $dict, $oldlines[0] );
+                @fwrite( $dict, $oldlines[0] );
 
 				// Write the new file back out. 
 				foreach( $lines as $line ) 
 				{
-					if( !fwrite( $dict, $line."\n" ) )
+					if( !@fwrite( $dict, $line."\n" ) )
 					{
 						$success = false;
 					} 
 				}
-				fclose( $dict );
+				@fclose( $dict );
 
 			}
 			else

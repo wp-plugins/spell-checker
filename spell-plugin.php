@@ -79,19 +79,17 @@ if( ! function_exists('personal_dictionary_word_list') )
         $return_string = '';
 
         $current_settings = speller_get_settings('speller_settings');
-		if( !file_exists( $current_settings['aspell_dict'] ) )
+        if( file_exists( $current_settings['aspell_dict'] ) )
 		{
-			create_dictionary();
+
+			$lines = @file( $current_settings['aspell_dict'] );
+			$count = @count( $lines );
+			
+			for( $i = 1; $i < $count; $i++ )
+			{
+				$return_string .= $lines[$i];
+			}
 		}
-
-        $lines = file( $current_settings['aspell_dict'] );
-        $count = count( $lines );
-
-        for( $i = 1; $i < $count; $i++ )
-        {
-            $return_string .= $lines[$i];
-        }
-
 
         return $return_string;
 	}
@@ -196,6 +194,17 @@ if( is_plugin_page() )
 			$speller_options = $default_options;
 	}
 
+	if(!is_writable(dirname($speller_settings['aspell_dict'])))
+	{
+		echo '<div class="updated"><p><strong>' . __('WARNING: You forgot to make the personal dictionary directory writable. Please read the install instructions and chmod this folder to provide write privileges to the Apache task.', 'spellerdomain') . '</strong></p></div>';
+	}
+	else if( !file_exists( $current_settings['aspell_dict'] ) )
+	{
+		if( !create_dictionary() )
+		{
+			echo '<div class="updated"><p><strong>' . __('WARNING: Unable to create the personal dictionary file!', 'spellerdomain') . '</strong></p></div>';
+		}
+	}
 
 	?>
     <div class="wrap">
