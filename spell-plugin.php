@@ -3,7 +3,7 @@
 Plugin Name: Spelling Checker
 Plugin URI: http://www.coldforged.org/spelling-checker-plugin-for-wordpress/
 Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="../wp-content/plugins/spell-plugin.php?speller_setup">Spell Checker Configuration</a> page. 
-Version: 1.14
+Version: 1.15
 Author: Brian "ColdForged" Dupuis
 Author URI: http://www.coldforged.org/
 Update: http://www.coldforged.org/plugin-update.php?p=544
@@ -39,7 +39,7 @@ require((dirname(dirname(__FILE__))."/spell-plugin/spellInclude.php"));
 if(isset( $_REQUEST['speller_setup']) && is_file(ABSPATH . "wp-admin/admin.php") )
 {
     // Redirect 1.3/1.5 installs to the options page.
-    $location = get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php";
+    $location = get_settings("wpurl") . "/wp-admin/admin.php?page=spell-plugin.php";
     header("Location: $location");
 } 
 
@@ -439,7 +439,8 @@ else
 {
     if( speller_option_set( 'enable_speller' ) )
     {
-
+	global $wp_13;
+	$useurl = $wp_13 ? get_settings('wpurl') : get_settings('url');
         /*
            insert_footer_code()
            Actually insert the code into the footer.
@@ -477,7 +478,7 @@ else
                    ?>
     
         <!-- Source the JavaScript spellChecker object -->
-        <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/spell-plugin/spellChecker.js">
+        <script language="javascript" type="text/javascript" src="<?php echo $useurl;?>/wp-content/spell-plugin/spellChecker.js">
         </script>
         <!-- Call a function like this to handle the spell check command -->
         <script language="javascript" type="text/javascript">
@@ -486,7 +487,7 @@ else
                 var txt = document.getElementById("content");
                 // give the spellChecker object a reference to our textarea
                 // pass any number of text objects as arguments to the constructor:
-                var speller = new spellChecker( txt,"<?php bloginfo('url');?>" );
+                var speller = new spellChecker( txt,"<?php echo $useurl;?>" );
                 // kick it off
                 speller.openChecker();
             }
@@ -559,7 +560,7 @@ else
             ?>
 			
     <!-- Source the JavaScript spellChecker object -->
-    <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/spell-plugin/spellChecker.js">
+    <script language="javascript" type="text/javascript" src="<?php echo $useurl;?>/wp-content/spell-plugin/spellChecker.js">
     </script>
     <!-- Call a function like this to handle the spell check command -->
     <script language="javascript" type="text/javascript">
@@ -568,7 +569,7 @@ else
                 var txt = document.getElementById('<?php echo $text_field_id;?>');
                 // give the spellChecker object a reference to our textarea
                 // pass any number of text objects as arguments to the constructor:
-                var speller = new spellChecker( txt,"<?php bloginfo('url');?>" );
+                var speller = new spellChecker( txt,"<?php echo $useurl;?>" );
                 // kick it off
                 speller.openChecker();
         }
