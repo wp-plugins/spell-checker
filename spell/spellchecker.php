@@ -6,7 +6,6 @@ include_once( dirname( __FILE__ )."/spellConfig.php");
 $spellercss = dirname( $PHP_SELF ).'/spellerStyle.css';
 $word_win_src = dirname( $PHP_SELF ).'/wordWindow.js';
 $textinputs = $_POST['textinputs']; # array
-$aspell_word_list = "aspell-word-list.txt";
 $input_separator = "A";
 
 # set the JavaScript variable to the submitted text.
@@ -57,54 +56,26 @@ function error_handler( $err ) {
 	echo "error = '" . escape_quote( $err ) . "';\n";
 }
 
-function create_dictionary_manually()
-{
-	global $aspell_dict;
-	global $aspell_word_list;
-	global $lang;
-	
-	// Write the new word to the end of the file.
-    $dict = fopen( $aspell_dict, 'wb' );
-	if( file_exists( $aspell_word_list ) ) 
-	{
-		$lines = file( $aspell_word_list );
-		$count = count( $lines );
-		fwrite( $dict, "personal_ws-1.1 $lang $count\n" );
-		foreach( $lines as $line )
-		{
-			fwrite( $dict, $line );
-		}
-	}
-	fclose( $dict );		 
-}
-
 ## get the list of misspelled words. Put the results in the javascript words array
 ## for each misspelled word, get suggestions and put in the javascript suggs array
 function print_checker_results() {
+	$current_settings = speller_get_settings('speller_settings');
 
-	global $aspell_prog;
-	global $aspell_dict;
-	global $aspell_dict_create;
-	global $aspell_word_list;
-	global $aspell_opts;
-	global $aspell_opts_nodict;
-	global $tempfiledir;
 	global $textinputs;
 	global $input_separator;
 	$aspell_err = "";
 
+	$aspell_opts        = "-a -H --lang=".$current_settings['language']." --personal=".$current_settings['aspell_dict'];
+	global $aspell_word_list;
+
 	# make sure the personal dictionary is there.
-	if( !file_exists( $aspell_dict ) ) {
-                $cmd = "$aspell_prog $aspell_dict_create $aspell_word_list  2>&1";
-		shell_exec( $cmd );
-		if( !file_exists( $aspell_dict ) ) {
-			create_dictionary_manually();
-		}
+	if( !file_exists( $current_settings['aspell_dict'] ) ) {
+		create_dictionary();
 	}	
 
 
 	# create temp file
-	$tempfile = tempnam( $tempfiledir, 'aspell_data_' );
+	$tempfile = tempnam( $current_settings['tmpfiledir'], 'aspell_data_' );
 	# open temp file, add the submitted text.
 	if( $fh = fopen( $tempfile, 'w' )) {
 		for( $i = 0; $i < count( $textinputs ); $i++ ) {
@@ -121,7 +92,7 @@ function print_checker_results() {
 		fclose( $fh );
 
 		# exec aspell command - redirect STDERR to STDOUT
-		$cmd = "$aspell_prog $aspell_opts < $tempfile 2>&1";
+		$cmd = $current_settings['aspell_prog']." $aspell_opts < $tempfile 2>&1";
 		if( $aspellret = shell_exec( $cmd )) {
 			$linesout = explode( "\n", $aspellret );
 			$index = 0;

@@ -1,14 +1,6 @@
 WordPress
-pre
 PHP
 html
 ColdForged
 MySQL
-src
-ul
-ol
-li
-br
-img
-blockquote
 blog

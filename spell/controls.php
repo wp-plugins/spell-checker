@@ -148,7 +148,7 @@ function init_spell() {
 			<td>&nbsp;&nbsp;</td>
 <?php 
 	  get_currentuserinfo();
-	  if((!$must_be_logged_in_to_add) || ($must_be_logged_in_to_add && ($user_level >= $minimum_user_level_to_add_words))) {
+	  if((!$current_options['must_be_logged_in']) || ($current_options['must_be_logged_in'] && ($user_level >= $current_settings['minimum_user_level_to_add']))) {
 ?>
             <td>
 			<input class="buttonDefault" type="button" name="btnAdd" value="Add" onClick="addWord();">
