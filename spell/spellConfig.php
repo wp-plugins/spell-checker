@@ -12,6 +12,12 @@ $must_be_logged_in_to_add = true;
 # must be before they can add words to the dictionary.
 $minimum_user_level_to_add_words = 8;
 
+# Do you have a version of aspell that crashes when creating/merging
+# personal dictionaries? If so, set this to true and I'll manually handle
+# the dictionary stuff so that "add words" works for you too. Yes, I am
+# nice.
+$broken_aspell_personal_dictionary = false;
+
 # path to the 'aspell' executable. Get this by typing "which aspell" 
 # in a terminal on the web host.
 $aspell_path = '/usr/bin/';
