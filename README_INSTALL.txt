@@ -44,13 +44,6 @@ will function.
 5) IMPORTANT: Once activated, you then _must_ visit the plugin options 
 page at least once to enable the functionality. Until you view this page, 
 the plugin will not function and no "Check Spelling" button will appear. 
-This option page is accessed differently depending on which version of 
-WordPress you are running.
-
-	* For WordPress 1.5 and higher, visit 
-	
-http://{WordPress root}/wp-admin/admin.php?page=spell-plugin.php
-	
-	* For older version of WordPress, visit
+Simply visit: 
 	
 http://{WordPress root}/wp-content/plugins/spell-plugin.php?speller_setup

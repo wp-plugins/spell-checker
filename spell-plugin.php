@@ -2,8 +2,8 @@
 /*
 Plugin Name: Spelling Checker
 Plugin URI: http://www.coldforged.org/spelling-checker-plugin-for-wordpress/
-Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="admin.php?page=spell-plugin.php">Options &gt; Spell Checker</a> page. <br/><br/><i>If your are running WP 1.2, you need to configure this plugin by browsing to: <a href="../wp-content/plugins/spell-plugin.php?speller_setup">wp-content/plugins/spell-plugin.php?speller_setup</a></i>
-Version: 1.1
+Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="../wp-content/plugins/spell-plugin.php?speller_setup">Spell Checker Configuration</a> page. 
+Version: 1.11
 Author: Brian "ColdForged" Dupuis
 Author URI: http://www.coldforged.org/
 Update: http://www.coldforged.org/plugin-update.php?p=544
@@ -38,8 +38,10 @@ require((dirname(dirname(__FILE__))."/spell-plugin/spellInclude.php"));
 /* Damn near all of this "option page insertion" code is from the simply awesome Spam Karma. All hail. */
 if(isset( $_REQUEST['speller_setup']) && is_file(ABSPATH . "wp-admin/admin.php") )
 {
-    die( "If you are using WordPress version 1.3.2 and higher, please use the Admin menu to access the Spell Checker options (under Options >> Spell Checker). You can also use this direct link: <a href=\"". get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php\">". get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php</a>");
-}
+    // Redirect 1.3/1.5 installs to the options page.
+    $location = get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php";
+    header("Location: $location");
+} 
 
 if (! function_exists('speller_is_plugin_page'))
 {
@@ -308,6 +310,26 @@ if( speller_is_plugin_page() )
             echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: The temporary directory you specified is not writeable from the Apache task. Either select a different temporary directory (like "/tmp") or make the directory you specified writable by the Apache task (chmod 755 the directory).', 'spellerdomain') . '</strong></p></div>';
         }
     
+        if( !file_exists( $speller_settings['aspell_path'] ) )
+        {
+            if( speller_option_set( 'enable_speller' ) )
+            {
+                unset($speller_options[array_search('enable_speller',$speller_options)]);
+                $speller_options = array_values( $speller_options );
+                speller_update_option('speller_options',  $speller_options);
+            }
+            echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: The aspell executable could not be found in the location specified (', 'spellerdomain') . $speller_settings['aspell_path'] . __('). Please fill in the correct path to the aspell executable below. You may need to ask your hosting provider for this information if you do not know where it resides.', 'spellerdomain') . '</strong></p></div>';
+        } else if( !is_executable( $speller_settings['aspell_path'] ) )
+        {
+            if( speller_option_set( 'enable_speller' ) )
+            {
+                unset($speller_options[array_search('enable_speller',$speller_options)]);
+                $speller_options = array_values( $speller_options );
+                speller_update_option('speller_options',  $speller_options);
+            }
+            echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: The specified aspell executable (', 'spellerdomain') . $speller_settings['aspell_path'] . __(') is not executable, meaning the web server process does not have execute permission. Either use a different aspell location or give the web server process permission to execute it.', 'spellerdomain') . '</strong></p></div>';
+        }
+
         if(!is_writable(dirname($speller_settings['aspell_dict'])))
         {
             if( speller_option_set( 'enable_speller' ) )
@@ -438,20 +460,17 @@ else
     {
 
         /*
-           spell_admin_footer()
-           Add the UI to check spelling for the post.
+           insert_footer_code()
+           Actually insert the code into the footer.
         */
-        if( !function_exists( 'spell_admin_footer' ) )
-        {
-           function spell_admin_footer($content) {
-               // Are we on the right page?
-               if((preg_match('|post.php|i', $_SERVER["REQUEST_URI"]))||(preg_match('|page-new.php|i', $_SERVER["REQUEST_URI"]))) {
+        if( !function_exists( 'insert_header_code' ) ) {
+            function insert_footer_code() {
             ?>
-			
+
     <div style="display: inline" id="spellingdiv">
         <input type="button" value="Check Spelling" onClick="openSpellChecker();" />
     </div>
-				
+
     <script language="JavaScript" type="text/javascript">
         var savebutton = document.getElementById("saveasdraft");
         if( !savebutton ) {
@@ -465,10 +484,51 @@ else
         submitp.insertBefore(substitution2, savebutton);
     </script>
             <?php
-                }
             }
         }
-        
+
+        /*
+           insert_header_code()
+           Actually add the header code.
+        */
+        if( !function_exists( 'insert_header_code' ) ) {
+            function insert_header_code() {
+                   ?>
+    
+        <!-- Source the JavaScript spellChecker object -->
+        <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/spell-plugin/spellChecker.js">
+        </script>
+        <!-- Call a function like this to handle the spell check command -->
+        <script language="javascript" type="text/javascript">
+            function openSpellChecker() {
+                // get the textarea we're going to check
+                var txt = document.getElementById("content");
+                // give the spellChecker object a reference to our textarea
+                // pass any number of text objects as arguments to the constructor:
+                var speller = new spellChecker( txt,"<?php bloginfo('url');?>" );
+                // kick it off
+                speller.openChecker();
+            }
+        </script>
+                   <?php
+            }
+        }
+
+        /*
+           spell_admin_footer()
+           Add the UI to check spelling for the post.
+        */
+        if( !function_exists( 'spell_admin_footer' ) )
+        {
+           function spell_admin_footer($content) {
+               // Are we on the right page?
+               if((preg_match('|post.php|i', $_SERVER["REQUEST_URI"]))||
+                  (preg_match('|page-new.php|i', $_SERVER["REQUEST_URI"]))) {
+                   insert_footer_code();
+               }
+           }
+        }
+
         /*
            spell_admin_head()
            Add the UI to check spelling for the post.
@@ -476,31 +536,42 @@ else
         if( !function_exists( 'spell_admin_head' ) )
         {
             function spell_admin_head($content) {
-               // Are we on the right page?
-               if(((preg_match('|post.php|i', $_SERVER["REQUEST_URI"]))||(preg_match('|page-new.php|i', $_SERVER["REQUEST_URI"])))&&!ini_get('safe_mode')) {
-                   
-               ?>
-			
-    <!-- Source the JavaScript spellChecker object -->
-    <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/spell-plugin/spellChecker.js">
-    </script>
-    <!-- Call a function like this to handle the spell check command -->
-    <script language="javascript" type="text/javascript">
-        function openSpellChecker() {
-            // get the textarea we're going to check
-            var txt = document.getElementById("content");
-            // give the spellChecker object a reference to our textarea
-            // pass any number of text objects as arguments to the constructor:
-            var speller = new spellChecker( txt,"<?php bloginfo('url');?>" );
-            // kick it off
-            speller.openChecker();
-        }
-    </script>
-               <?php
-               }
+                // Are we on the right page?
+                if((preg_match('|post.php|i', $_SERVER["REQUEST_URI"]))||
+                   (preg_match('|page-new.php|i', $_SERVER["REQUEST_URI"]))) {
+                    insert_header_code();
+                }
             }
         } 
-            
+
+        /*
+           spell_admin_footer_bookmarklet()
+           Add the UI to check spelling for the post.
+        */
+        if( !function_exists( 'spell_admin_footer_bookmarklet' ) )
+        {
+           function spell_admin_footer_bookmarklet($content) {
+               // Are we on the right page?
+               if(preg_match('|bookmarklet.php|i', $_SERVER["REQUEST_URI"])) {
+                   insert_footer_code();
+               }
+           }
+        }
+
+        /*
+           spell_admin_head_bookmarklet()
+           Add the UI to check spelling for the post.
+        */
+        if( !function_exists( 'spell_admin_head_bookmarklet' ) )
+        {
+            function spell_admin_head_bookmarklet($content) {
+                // Are we on the right page?
+                if(preg_match('|bookmarklet.php|i', $_SERVER["REQUEST_URI"])) {
+                    insert_header_code();
+                }
+            }
+        } 
+
         if( !function_exists( 'spell_insert_headers' ) ) 
         {
             function spell_insert_headers($text_field_id='comment') {
@@ -536,6 +607,8 @@ else
     
         add_filter('admin_footer', 'spell_admin_footer', 9);
         add_filter('admin_head', 'spell_admin_head', 9);
+        add_filter('admin_menu', 'spell_admin_head_bookmarklet', 20 );
+        add_filter('simple_edit_form', 'spell_admin_footer_bookmarklet', 20 );
     }
     else
     {
