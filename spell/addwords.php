@@ -60,16 +60,57 @@ function add_word_to_dictionary($word_to_add) {
 
 function add_word_to_dictionary_manually($word_to_add) {
     global $aspell_dict;
-    global $lang;
+	$success = true;
 
 	if( file_exists( $aspell_dict ) )
 	{
-        $dict = fopen( $aspell_dict, 'a+b' );
-        fwrite( $dict, "\n".$word_to_add );
-        rewind( $dict );
+		// Write the new word to the end of the file.
+		$lines = file( $aspell_dict );
+		$count = count( $lines );
 
+        if( ( $dict = fopen( $aspell_dict, 'wb' ) ) !== false )
+		{
+			// Empty the file.
+			ftruncate( $dict, 0);	  
+			  
+			// Now, update the word count on the first line. It's the last of three 
+			// space-delimited strings (e.g. personal_ws-1.1 english 15)
+			$elements = explode( ' ', $lines[0] );
+			$count = intval(rtrim( $elements[2]));
+			$elements[2] = strval( $count + 1 );
+			$lines[0] = implode( ' ', $elements ) . "\n";
 
+			// Write the new file back out. 
+			foreach( $lines as $line ) 
+			{
+				if( !fwrite( $dict, $line ) )
+				{
+					$success = false;
+				} 
+			}
+
+			fwrite( $dict, $word_to_add."\n" );
+		}
+		else
+		{
+			$success = false;
+		} 
+		fclose( $dict );
 	}
+	else
+	{
+		$success = false;
+	} 
+		 
+
+	if( $success )
+	{
+		response_xml("SUCCESS");
+	}
+	else
+	{
+		response_xml("FAILURE");
+	}  
 }
 
 # we only authorize a certain level of user to add words to the 

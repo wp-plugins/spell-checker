@@ -57,6 +57,27 @@ function error_handler( $err ) {
 	echo "error = '" . escape_quote( $err ) . "';\n";
 }
 
+function create_dictionary_manually()
+{
+	global $aspell_dict;
+	global $aspell_word_list;
+	global $lang;
+	
+	// Write the new word to the end of the file.
+    $dict = fopen( $aspell_dict, 'wb' );
+	if( file_exists( $aspell_word_list ) ) 
+	{
+		$lines = file( $aspell_word_list );
+		$count = count( $lines );
+		fwrite( $dict, "personal_ws-1.1 $lang $count\n" );
+		foreach( $lines as $line )
+		{
+			fwrite( $dict, $line );
+		}
+	}
+	fclose( $dict );		 
+}
+
 ## get the list of misspelled words. Put the results in the javascript words array
 ## for each misspelled word, get suggestions and put in the javascript suggs array
 function print_checker_results() {
@@ -77,7 +98,7 @@ function print_checker_results() {
                 $cmd = "$aspell_prog $aspell_dict_create $aspell_word_list  2>&1";
 		shell_exec( $cmd );
 		if( !file_exists( $aspell_dict ) ) {
-			$aspell_opts = $aspell_opts_nodict;
+			create_dictionary_manually();
 		}
 	}	
 
