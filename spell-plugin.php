@@ -3,7 +3,7 @@
 Plugin Name: Spelling Checker
 Plugin URI: http://www.coldforged.org/spelling-checker-plugin-for-wordpress/
 Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="../wp-content/plugins/spell-plugin.php?speller_setup">Spell Checker Configuration</a> page. 
-Version: 1.15
+Version: 1.16
 Author: Brian "ColdForged" Dupuis
 Author URI: http://www.coldforged.org/
 Update: http://www.coldforged.org/plugin-update.php?p=544
@@ -39,7 +39,7 @@ require((dirname(dirname(__FILE__))."/spell-plugin/spellInclude.php"));
 if(isset( $_REQUEST['speller_setup']) && is_file(ABSPATH . "wp-admin/admin.php") )
 {
     // Redirect 1.3/1.5 installs to the options page.
-    $location = get_settings("wpurl") . "/wp-admin/admin.php?page=spell-plugin.php";
+    $location = get_settings("siteurl") . "/wp-admin/admin.php?page=spell-plugin.php";
     header("Location: $location");
 } 
 
@@ -414,18 +414,17 @@ if( speller_is_plugin_page() )
                             </li>
                         </ul>
                     </ul>
-                    <?php if( speller_option_set( 'enable_speller' ) ) { ?>
-    				<input name="speller_options[]" type="hidden" id="enable_speller" value="enable_speller" />
-                    <?php } ?>
-                    <?php if( speller_option_set( 'options_mined' ) ) { ?>
-    				<input name="speller_options[]" type="hidden" id="options_mined" value="options_mined" />
-                    <?php } ?>
-                    <?php if( speller_option_set( 'auto_detect_aspell' ) ) { ?>
-    				<input name="speller_options[]" type="hidden" id="auto_detect_aspell" value="auto_detect_aspell" />
-                    <?php } ?>
-                
                 </fieldset>
-    
+
+                <?php if( speller_option_set( 'enable_speller' ) ) { ?>
+                <input name="speller_options[]" type="hidden" id="enable_speller" value="enable_speller" />
+                <?php } ?>
+                <?php if( speller_option_set( 'options_mined' ) ) { ?>
+                <input name="speller_options[]" type="hidden" id="options_mined" value="options_mined" />
+                <?php } ?>
+                <?php if( speller_option_set( 'auto_detect_aspell' ) ) { ?>
+                <input name="speller_options[]" type="hidden" id="auto_detect_aspell" value="auto_detect_aspell" />
+                <?php } ?>
                 <p class="submit">
                 <input type="submit" name="update_options" value="<?php _e('Update Options') ?>" />
                 </p>
@@ -439,8 +438,6 @@ else
 {
     if( speller_option_set( 'enable_speller' ) )
     {
-	global $wp_13;
-	$useurl = $wp_13 ? get_settings('wpurl') : get_settings('url');
         /*
            insert_footer_code()
            Actually insert the code into the footer.
@@ -475,10 +472,10 @@ else
         */
         if( !function_exists( 'insert_header_code' ) ) {
             function insert_header_code() {
-                   ?>
+                ?>
     
         <!-- Source the JavaScript spellChecker object -->
-        <script language="javascript" type="text/javascript" src="<?php echo $useurl;?>/wp-content/spell-plugin/spellChecker.js">
+        <script language="javascript" type="text/javascript" src="<?php echo get_settings('siteurl')?>/wp-content/spell-plugin/spellChecker.js">
         </script>
         <!-- Call a function like this to handle the spell check command -->
         <script language="javascript" type="text/javascript">
@@ -487,7 +484,7 @@ else
                 var txt = document.getElementById("content");
                 // give the spellChecker object a reference to our textarea
                 // pass any number of text objects as arguments to the constructor:
-                var speller = new spellChecker( txt,"<?php echo $useurl;?>" );
+                var speller = new spellChecker( txt,"<?php echo get_settings('siteurl')?>" );
                 // kick it off
                 speller.openChecker();
             }
@@ -560,7 +557,7 @@ else
             ?>
 			
     <!-- Source the JavaScript spellChecker object -->
-    <script language="javascript" type="text/javascript" src="<?php echo $useurl;?>/wp-content/spell-plugin/spellChecker.js">
+    <script language="javascript" type="text/javascript" src="<?php echo get_settings('siteurl')?>/wp-content/spell-plugin/spellChecker.js">
     </script>
     <!-- Call a function like this to handle the spell check command -->
     <script language="javascript" type="text/javascript">
@@ -569,7 +566,7 @@ else
                 var txt = document.getElementById('<?php echo $text_field_id;?>');
                 // give the spellChecker object a reference to our textarea
                 // pass any number of text objects as arguments to the constructor:
-                var speller = new spellChecker( txt,"<?php echo $useurl;?>" );
+                var speller = new spellChecker( txt,"<?php echo get_settings('siteurl')?>" );
                 // kick it off
                 speller.openChecker();
         }
