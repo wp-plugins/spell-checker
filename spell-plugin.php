@@ -255,7 +255,7 @@ if( speller_is_plugin_page() )
             }
     
             // Let's see if we can find the aspell executable.
-            if( !file_exists( $speller_settings['aspell_path'] ) )
+            if( !is_executable( $speller_settings['aspell_path'] ) )
             {
                 exec( "which aspell 2>&1", $out, $err );
                 if( $err == 0 )
