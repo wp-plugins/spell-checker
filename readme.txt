@@ -6,9 +6,9 @@ The Spelling Checker plug-in for WordPress provides a built-in facility for spel
 
 == Installation ==
 
-* The easiest way to install the plugin is to use the One-Click Install option of the <a href="http://wp-plugins.net/index.php?id=104">WordPress Plugin Manager</a>.
-* Otherwise, download the <a href="http://coldforged.org/spell-plugin.zip">zip file</a> and follow the "README_INSTALL.txt" direction, or the <a href="http://coldforged.org/spell-plugin.tar.gz">tarball</a>, copy it to your "wp-content/" folder in your WordPress installation, then execute "tar xvzf spell-plugin.tar.gz". Note that you should chmod the PHP files to 755.
-* The plugin must be enabled from the plugins page, then ''you must visit the Spell Checker options page at least once'' before the plugin will be finally enabled. Follow the appropriate link in the Spell Checker entry of the Plugins page.
+ * The easiest way to install the plugin is to use the One-Click Install option of the <a href="http://wp-plugins.net/index.php?id=104">WordPress Plugin Manager</a>.
+ * Otherwise, download the <a href="http://coldforged.org/spell-plugin.zip">zip file</a> and follow the "README_INSTALL.txt" direction, or the <a href="http://coldforged.org/spell-plugin.tar.gz">tarball</a>, copy it to your "wp-content/" folder in your WordPress installation, then execute "tar xvzf spell-plugin.tar.gz". Note that you should chmod the PHP files to 755.
+ * The plugin must be enabled from the plugins page, then ''you must visit the Spell Checker options page at least once'' before the plugin will be finally enabled. Follow the appropriate link in the Spell Checker entry of the Plugins page.
 
 == Frequently Asked Questions ==
 
@@ -38,10 +38,10 @@ spell_insert_comment_button();
 
 For more flexibility you can specify the following parameters to this function:
 
-* '''$button_class''' - If so desired, you can apply a class specifier to 
+ * '''$button_class''' - If so desired, you can apply a class specifier to 
 the resulting button. Leaving this as the default causes no class to be 
 specified. For instance, to specify a class of "buttonclass", simply specify "buttonclass" as the first parameter to the function.
-* '''$tabindex''' - To enhance usability, you can specify a tabindex to include in the button declaration. If undeclared, no tabindex is specified. Note that if you don't wish to specify a class you must pass an empty string ('') as the first parameter. As an example to specify a tabindex of 4 with no class, call the function as follows:
+ * '''$tabindex''' - To enhance usability, you can specify a tabindex to include in the button declaration. If undeclared, no tabindex is specified. Note that if you don't wish to specify a class you must pass an empty string as the first parameter. As an example to specify a tabindex of 4 with no class, call the function as follows:
 
 {{{
 spell_insert_comment_button( '', "4" );
