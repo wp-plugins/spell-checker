@@ -3,7 +3,7 @@
 Plugin Name: Spelling Checker
 Plugin URI: http://www.coldforged.org/spelling-checker-plugin-for-wordpress/
 Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="admin.php?page=spell-plugin.php">Options &gt; Spell Checker</a> page. <br/><br/><i>If your are running WP 1.2, you need to configure this plugin by browsing to: <a href="../wp-content/plugins/spell-plugin.php?speller_setup">wp-content/plugins/spell-plugin.php?speller_setup</a></i>
-Version: 1.0
+Version: 1.1
 Author: Brian "ColdForged" Dupuis
 Author URI: http://www.coldforged.org/
 Update: http://www.coldforged.org/plugin-update.php?p=544
@@ -33,8 +33,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-
-require((dirname(__FILE__)."/spell/spellInclude.php"));
+require((dirname(dirname(__FILE__))."/spell-plugin/spellInclude.php"));
 
 /* Damn near all of this "option page insertion" code is from the simply awesome Spam Karma. All hail. */
 if(isset( $_REQUEST['speller_setup']) && is_file(ABSPATH . "wp-admin/admin.php") )
@@ -46,7 +45,11 @@ if (! function_exists('speller_is_plugin_page'))
 {
     function speller_is_plugin_page()
     {
-        return isset($_REQUEST['speller_setup']);
+        global $wp_13;
+        if( $wp_13 )
+            return is_plugin_page();
+        else    
+            return isset($_REQUEST['speller_setup']);
     }
 }
 
@@ -152,8 +155,8 @@ if( speller_is_plugin_page() )
         'minimum_user_level' => 8,
         'aspell_path' => '/usr/bin/aspell',
         'language' => 'en_US',
-        'aspell_dict' => dirname( __FILE__ )."/spell/aspell.personal",
-        'tmpfiledir' => dirname( __FILE__ )."/spell/",
+        'aspell_dict' => dirname(dirname( __FILE__ ))."/spell-plugin/aspell.personal",
+        'tmpfiledir' => dirname(dirname( __FILE__ ))."/spell-plugin/",
         );
 
     $default_options = array(
@@ -210,24 +213,43 @@ if( speller_is_plugin_page() )
         {
             // First time we've run. See if we have a legacy spellConfig.php file 
             // that we can mine setup information from.
-            if( !speller_option_set( 'options_mined') && file_exists( dirname(__FILE__)."/spell/spellConfig.php" ) )
+            if( !speller_option_set( 'options_mined') )
             {
-                include( dirname(__FILE__)."/spell/spellConfig.php" );
-    
-                $speller_settings['minimum_user_level'] = $minimum_user_level_to_add_words;
-                $speller_settings['language'] = $lang;
-                $speller_settings['aspell_path'] = $aspell_prog;
-                $speller_settings['aspell_dict'] = $aspell_dict;
-                $speller_settings['tmpfiledir'] = ($tempfiledir == ''?'/tmp':$tempfiledir);
-                if( $broken_aspell_personal_dictionary )
-                    $speller_options[] = 'broken_aspell_support';
-                if( $must_be_logged_in_to_add )
-                    $speller_options[] = 'must_be_logged_in';
-    
-                speller_update_option('speller_settings', $speller_settings);
-                $speller_options[] = 'options_mined';
-    
-                echo '<div class="updated"><p><strong>' . __('Options have been extracted from your existing configuration file. Please verify their accuracy.', 'spellerdomain') . '</strong></p></div>';
+                if( file_exists( dirname(__FILE__)."/spell/spellConfig.php" ) )
+                {
+                    include( dirname(__FILE__)."/spell/spellConfig.php" );
+        
+                    $speller_settings['minimum_user_level'] = $minimum_user_level_to_add_words;
+                    $speller_settings['language'] = $lang;
+                    $speller_settings['aspell_path'] = $aspell_prog;
+
+                    if( file_exists( $aspell_dict ) )
+                    {
+                        if( dirname( $aspell_dict ) === dirname(__FILE__)."/spell" )
+                        {
+                            // Okay, migrate the user's dictionary. It's in the default place,
+                            // so moving it to the new place should be a problem.
+                            $lines = @file( $aspell_dict );
+                            $lines[0] = $lines[ count($lines) - 1 ];
+                            $words = implode( "",$lines);
+
+                            update_personal_dictionary( $words );
+                            echo '<div class="updated"><p><strong>' . __('Your personal dictionary has been migrated.', 'spellerdomain') . '</strong></p></div>';
+                        }
+                    }
+                    $speller_settings['tmpfiledir'] = ($tempfiledir == ''?'/tmp':$tempfiledir);
+                    if( $broken_aspell_personal_dictionary )
+                        $speller_options[] = 'broken_aspell_support';
+                    if( $must_be_logged_in_to_add )
+                        $speller_options[] = 'must_be_logged_in';
+        
+                    speller_update_option('speller_settings', $speller_settings);
+                    $speller_options[] = 'options_mined';
+        
+                    echo '<div class="updated"><p><strong>' . __('Options have been extracted from your existing configuration file. Please verify their accuracy.', 'spellerdomain') . '</strong></p></div>';
+                }
+                
+                echo '<div class="updated" style="background-color: #8080FF;border: 3px solid #00F;"><p><strong>' . __('NOTE: This verison of the Spelling Checker plugin has a slightly different heirarchy. As such, the "wp-content/plugins/spell" directory is no longer needed. Any options you had specified have been integrated and your personal dictionary -- if it was located in the default location -- has been migrated to the new location. You may safely remove it.', 'spellerdomain') . '</strong></p></div>';
             }
     
             // Let's see if we can find the aspell executable.
@@ -460,7 +482,7 @@ else
                ?>
 			
     <!-- Source the JavaScript spellChecker object -->
-    <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/plugins/spell/spellChecker.js">
+    <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/spell-plugin/spellChecker.js">
     </script>
     <!-- Call a function like this to handle the spell check command -->
     <script language="javascript" type="text/javascript">
@@ -485,7 +507,7 @@ else
             ?>
 			
     <!-- Source the JavaScript spellChecker object -->
-    <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/plugins/spell/spellChecker.js">
+    <script language="javascript" type="text/javascript" src="<?php bloginfo( 'url' );?>/wp-content/spell-plugin/spellChecker.js">
     </script>
     <!-- Call a function like this to handle the spell check command -->
     <script language="javascript" type="text/javascript">
