@@ -13,11 +13,11 @@
 function spellChecker( textObject, baseUrl ) {
 
 	// public properties - configurable
-	this.popUpUrl = baseUrl+'/wp-content/plugins/spell/spellchecker.html';
-	this.addWordsUrl = baseUrl+'/wp-content/plugins/spell/addwords.php';
+	this.popUpUrl = baseUrl+'/wp-content/spell-plugin/spellchecker.html';
+	this.addWordsUrl = baseUrl+'/wp-content/spell-plugin/addwords.php';
 	this.popUpName = 'spellchecker';
 	this.popUpProps = "menu=no,width=440,height=350,top=70,left=120,resizable=yes,status=yes";
-	this.spellCheckScript = baseUrl+'/wp-content/plugins/spell/spellchecker.php';
+	this.spellCheckScript = baseUrl+'/wp-content/spell-plugin/spellchecker.php';
 	//this.spellCheckScript = '/cgi-bin/spellchecker.pl';
 
 	// values used to keep track of what happened to a word

@@ -4,7 +4,7 @@ $aspell_word_list   = dirname(__FILE__)."/aspell-word-list.txt";
 
 if (! isset($wp_version))
 {
-    require_once (dirname(dirname(dirname(dirname(__FILE__)))) . "/wp-config.php");
+    require_once (dirname(dirname(dirname(__FILE__))) . "/wp-config.php");
     global $wp_version;
 }
 
@@ -193,7 +193,7 @@ if( ! function_exists( 'add_word_to_dictionary_manually' ) )
         if( file_exists( $current_settings['aspell_dict'] ) )
         {
             // Write the new word to the end of the file.
-            $lines = file( $current_settings['aspell_dict'] );
+            $lines = @file( $current_settings['aspell_dict'] );
             $lines[0] = $word_to_add."\n";
             $words = implode( "",$lines);
 
