@@ -3,7 +3,7 @@
 Plugin Name: Spelling Checker
 Plugin URI: http://www.coldforged.org/spelling-checker-plugin-for-wordpress/
 Description: Allows checking of spelling for posts, using the Speller Pages open source project at http://sourceforge.net/projects/spellerpages/. Configure on the <a href="../wp-content/plugins/spell-plugin.php?speller_setup">Spell Checker Configuration</a> page. 
-Version: 1.11
+Version: 1.12
 Author: Brian "ColdForged" Dupuis
 Author URI: http://www.coldforged.org/
 Update: http://www.coldforged.org/plugin-update.php?p=544
@@ -310,16 +310,7 @@ if( speller_is_plugin_page() )
             echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: The temporary directory you specified is not writeable from the Apache task. Either select a different temporary directory (like "/tmp") or make the directory you specified writable by the Apache task (chmod 755 the directory).', 'spellerdomain') . '</strong></p></div>';
         }
     
-        if( !file_exists( $speller_settings['aspell_path'] ) )
-        {
-            if( speller_option_set( 'enable_speller' ) )
-            {
-                unset($speller_options[array_search('enable_speller',$speller_options)]);
-                $speller_options = array_values( $speller_options );
-                speller_update_option('speller_options',  $speller_options);
-            }
-            echo '<div class="updated" style="background-color: #FF8080;border: 3px solid #F00;"><p><strong>' . __('FATAL: The aspell executable could not be found in the location specified (', 'spellerdomain') . $speller_settings['aspell_path'] . __('). Please fill in the correct path to the aspell executable below. You may need to ask your hosting provider for this information if you do not know where it resides.', 'spellerdomain') . '</strong></p></div>';
-        } else if( !is_executable( $speller_settings['aspell_path'] ) )
+		if( !is_executable( $speller_settings['aspell_path'] ) )
         {
             if( speller_option_set( 'enable_speller' ) )
             {
