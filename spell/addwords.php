@@ -58,6 +58,14 @@ function add_word_to_dictionary($word_to_add) {
 	unlink( $tempfilename );
 }
 
+function add_word_to_dictionary_manually($word_to_add) {
+    global $aspell_dict;
+
+    if()
+	{
+	}
+}
+
 # we only authorize a certain level of user to add words to the 
 # dictionary.
 
@@ -66,7 +74,14 @@ if((!$must_be_logged_in_to_add) || ($must_be_logged_in_to_add && ($user_level >=
 {
 	if( isset($_REQUEST["word"] ) )
 	{
-		add_word_to_dictionary( $_REQUEST["word"]);
+        if( $broken_aspell_personal_dictionary )
+		{
+			add_word_to_dictionary_manually( $_REQUEST["word"] );
+		}
+        else
+		{
+			add_word_to_dictionary( $_REQUEST["word"]);
+		}
 	}
 }
 
