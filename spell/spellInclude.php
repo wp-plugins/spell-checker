@@ -45,8 +45,6 @@ if (! function_exists('speller_update_option'))
                 $unserialized = @ unserialize(stripslashes($settings));
 				if( $unserialized !== FALSE )
 					$settings = $unserialized;
-                else
-                    echo "-- ".$settings." --<br />";
 			}
 			return $settings;
 		}
@@ -86,7 +84,6 @@ if( ! function_exists('create_dictionary') )
 
 		if( speller_option_set( 'broken_aspell_support' ) )
 		{
-			// Write the new word to the end of the file.
 			$dict = @fopen( $current_settings['aspell_dict'], 'wb' );
 			if( file_exists( $aspell_word_list ) ) 
 			{
@@ -98,7 +95,18 @@ if( ! function_exists('create_dictionary') )
 					@fwrite( $dict, $line );
 				}
 			}
-			@fclose( $dict );		 
+			else
+			{
+				return false;
+			}
+			@fclose( $dict );
+
+			if( file_exists( $current_settings['aspell_dict'] ) ) {
+				return true;
+			} else {
+				return false;
+			}
+
 		}
         else
 		{
@@ -113,6 +121,10 @@ if( ! function_exists('create_dictionary') )
 
                 // Call recursively to reach the "broken aspell" option.
 				create_dictionary();
+			}
+			else
+			{
+				return true;
 			}
 		}
 	}
