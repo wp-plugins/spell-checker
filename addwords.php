@@ -57,13 +57,14 @@ if( !speller_option_set('must_be_logged_in') || (speller_option_set('must_be_log
 	{
         $success = false;
 
+		$word_to_add = str_replace("\\'", "'", $_REQUEST["word"] );
         if( speller_option_set('broken_aspell_support') )
 		{
-			$success = add_word_to_dictionary_manually( $_REQUEST["word"] );
+			$success = add_word_to_dictionary_manually( $word_to_add );
 		}
         else
 		{
-			$success = add_word_to_dictionary( $_REQUEST["word"]);
+			$success = add_word_to_dictionary( $word_to_add );
 		}
 
 		if( $success )

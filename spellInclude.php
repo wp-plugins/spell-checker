@@ -161,7 +161,8 @@ if( ! function_exists('update_personal_dictionary') )
                 // Write the new file back out. 
                 foreach( $lines as $line ) 
                 {
-                    if( !@fwrite( $dict, $line."\n" ) )
+					$word_to_add = str_replace("\\'", "'", $line );
+                    if( !@fwrite( $dict, $word_to_add."\n" ) )
                     {
                         $success = false;
                     } 
